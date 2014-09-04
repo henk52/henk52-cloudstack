@@ -35,7 +35,19 @@
 #
 # Copyright 2014 Your name here, unless otherwise noted.
 #
-class cloudstack {
+class cloudstack (
+ $szRepoWebHostAddress = hiera( 'RepoWebHostAddress' ),
+) {
 
+# TODO N Do I need path, when it is the true file in the title?
+file { '/etc/yum.repos.d/cloudstack.repo':
+  path    => '/etc/yum.repos.d/cloudstack.repo',
+  ensure  => file,
+  content => template('cloudstack/cloudstack_repo.erb'),
+}
+
+exec { '/usr/bin/yum clean all':
+  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
+}
 
 }

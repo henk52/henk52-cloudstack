@@ -65,4 +65,23 @@ class { 'nfsserver':
 #  NfsExport => $arNfsExports,
 }
 
+# === MySQL
 
+class { '::mysql::server':
+  root_password    => 'strongpassword',
+}
+
+class { 'cloudstack':
+}
+
+package { 'java-1.7.0-openjdk-headless':
+  ensure => present,
+}
+
+package { 'cloudstack-management':
+  require => [
+               Class [ 'cloudstack' ],
+               Package [ 'java-1.7.0-openjdk-headless' ],
+             ],
+  ensure  => present,
+}
