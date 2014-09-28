@@ -1,0 +1,4 @@
+TODO V Make it optional to create the NFS shares.
+TODO V make it configurable to have the Primary and secondary storage on different nodes.
+TODO V Make it possible to install all the node types through this Module.
+TODO N Support firewalls

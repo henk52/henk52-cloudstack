@@ -56,10 +56,6 @@ package { 'ntp':
 }
 
 
-package { 'mysql-server':
-  ensure => present,
-}
-
 # TODO V Make this optional if you are running from a local repo.
 file_line { 'cloudstack.apt-get.eu':
   path => '/etc/hosts',
@@ -98,4 +94,29 @@ class { 'nfsserver':
    hohNfsExports => $hNfsExports,
 }
 
+$szMysqlRootPassword = 'strongpassword'
+
+# TODO Change the password.
+class { '::mysql::server':
+  root_password    => "$szMysqlRootPassword",
+}
+
+
+# TODO C make this work when running from puppet script.
+exec { 'install_cloud_db':
+  creates => '/var/lib/mysql/cloud',
+  path    => [ '/usr/bin', '/bin' ],
+  require => [
+                Class [ '::mysql::server' ],
+                Package [ 'cloudstack-management' ],
+              ],
+  command => "cloudstack-setup-databases cloud:SecretPassword@localhost --deploy-as=root:$szMysqlRootPassword",
+}
+
+exec { 'cloudstack-setup-management':
+  creates => '/var/log/cloudstack/management/setupManagement.log',
+  command => 'cloudstack-setup-management',
+  path    => '/usr/bin',
+  require => Exec [ 'install_cloud_db' ],
+}
 }
