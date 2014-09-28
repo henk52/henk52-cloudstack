@@ -71,4 +71,31 @@ package { 'cloudstack-management':
   require => File_line [ 'cloudstack.apt-get.eu' ],
 }
 
+$szPrimaryStorageDirectory = hiera( 'PrimaryStorageDirectory', '/primary' )
+$szSecondaryStorageDirectory = hiera( 'SecondaryStorageDirectory', '/secondary' )
+
+
+file { "$szPrimaryStorageDirectory":
+  ensure => directory,
+}
+file { "$szSecondaryStorageDirectory":
+  ensure => directory,
+}
+$szDefaultNfsOptionList =  'rw,async,no_root_squash,no_subtree_check'
+$szDefaultNfsClientList = hiera ( 'DefaultNfsClientList', '*' )
+
+$hNfsExports = {
+ "$szPrimaryStorageDirectory" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                               }, 
+ "$szSecondaryStorageDirectory" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                             }, 
+}
+class { 'nfsserver':
+   hohNfsExports => $hNfsExports,
+}
+
 }
