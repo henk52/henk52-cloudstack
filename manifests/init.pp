@@ -40,14 +40,35 @@ class cloudstack (
 ) {
 
 # TODO N Do I need path, when it is the true file in the title?
-file { '/etc/yum.repos.d/cloudstack.repo':
-  path    => '/etc/yum.repos.d/cloudstack.repo',
-  ensure  => file,
-  content => template('cloudstack/cloudstack_repo.erb'),
+#file { '/etc/yum.repos.d/cloudstack.repo':
+#  path    => '/etc/yum.repos.d/cloudstack.repo',
+#  ensure  => file,
+#  content => template('cloudstack/cloudstack_repo.erb'),
+#}
+
+#exec { '/usr/bin/yum clean all':
+#  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
+#}
+
+# TODO Call the NTP class for this.
+package { 'ntp':
+  ensure => present,
 }
 
-exec { '/usr/bin/yum clean all':
-  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
+
+package { 'mysql-server':
+  ensure => present,
+}
+
+# TODO V Make this optional if you are running from a local repo.
+file_line { 'cloudstack.apt-get.eu':
+  path => '/etc/hosts',
+  line => "$szRepoWebHostAddress  cloudstack.apt-get.eu",
+}
+
+package { 'cloudstack-management':
+  ensure  => present,
+  require => File_line [ 'cloudstack.apt-get.eu' ],
 }
 
 }
