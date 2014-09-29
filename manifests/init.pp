@@ -119,4 +119,18 @@ exec { 'cloudstack-setup-management':
   path    => '/usr/bin',
   require => Exec [ 'install_cloud_db' ],
 }
+
+exec { 'kvm_template_install':
+  creates => "$szSecondaryStorageDirectory/template",
+  command => "/usr/share/cloudstack-common/scripts/storage/secondary/cloud-install-sys-tmplt -m $szSecondaryStorageDirectory -u http://cloudstack.apt-get.eu/systemvm/4.4/systemvm64template-4.4.0-6-kvm.qcow2.bz2 -h kvm -F",
+  path    => [ '/usr/bin', '/bin' ],
+  require => Exec [ 'cloudstack-setup-management' ],
+}
+
+# /usr/share/cloudstack-common/scripts/storage/secondary/cloud-install-sys-tmplt \
+#-m /mnt/secondary \
+#-u http://cloudstack.apt-get.eu/systemvm/4.4/systemvm64template-4.4.0-6-kvm.qcow2.bz2 \ -h lxc \
+#-s <optional-management-server-secret-key> \
+#-F
+
 }
