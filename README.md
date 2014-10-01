@@ -11,6 +11,10 @@ Finish the configuration via UI, see p20 and on for cloudstack_installation.pdf
 
 http://CLOUDSTACK_MGMT:8080/client
 
+If you want to download the ISO from the local network you neet to set the 'secstorage.allowed.internal.sites'
+ to the host IP where the ISO are stored.
+(And execute: service cloudstack-management restart )
+
 
 
 
