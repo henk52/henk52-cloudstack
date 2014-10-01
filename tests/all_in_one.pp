@@ -1,10 +1,10 @@
 
-network::if::static { 'eth1':
-  ensure       => 'up',
-  ipaddress    => '10.1.233.10',
-  netmask      => '255.255.255.0',
-  gateway      => '10.1.233.3',
-}
+#network::if::static { 'eth1':
+#  ensure       => 'up',
+#  ipaddress    => '10.1.233.10',
+#  netmask      => '255.255.255.0',
+#  gateway      => '10.1.233.3',
+#}
 
 
 # NTP p15-16
@@ -67,21 +67,16 @@ class { 'nfsserver':
 
 # === MySQL
 
+$szMysqlRootPassword = 'strongpassword'
+
+# TODO Change the password.
 class { '::mysql::server':
-  root_password    => 'strongpassword',
+  root_password    => "$szMysqlRootPassword",
 }
+
 
 class { 'cloudstack':
+  require => Class [ '::mysql::server' ],
+  szSecondaryStorageDirectory => "$szSecondaryStorage",
 }
 
-package { 'java-1.7.0-openjdk-headless':
-  ensure => present,
-}
-
-package { 'cloudstack-management':
-  require => [
-               Class [ 'cloudstack' ],
-               Package [ 'java-1.7.0-openjdk-headless' ],
-             ],
-  ensure  => present,
-}

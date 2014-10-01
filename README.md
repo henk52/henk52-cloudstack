@@ -3,6 +3,10 @@ henk52-cloudstack
 
 Puppet modules for Cloudstack installation.
 
+  clear;puppet apply tests/all_in_one.pp 
+  clear;puppet apply tests/kvm_agent.pp 
+
+
 
 
 

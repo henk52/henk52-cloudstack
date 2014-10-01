@@ -37,6 +37,7 @@
 #
 class cloudstack (
  $szRepoWebHostAddress = hiera( 'RepoWebHostAddress' ),
+ $szSecondaryStorageDirectory,
 ) {
 
 # TODO N Do I need path, when it is the true file in the title?
@@ -62,56 +63,30 @@ file_line { 'cloudstack.apt-get.eu':
   line => "$szRepoWebHostAddress  cloudstack.apt-get.eu",
 }
 
+
+#package { 'java-1.7.0-openjdk-headless':
+#  ensure => present,
+#}
+
 package { 'cloudstack-management':
+  require => [
+               File_line [ 'cloudstack.apt-get.eu' ],
+             ],
   ensure  => present,
-  require => File_line [ 'cloudstack.apt-get.eu' ],
-}
-
-$szPrimaryStorageDirectory = hiera( 'PrimaryStorageDirectory', '/primary' )
-$szSecondaryStorageDirectory = hiera( 'SecondaryStorageDirectory', '/secondary' )
-
-
-file { "$szPrimaryStorageDirectory":
-  ensure => directory,
-}
-file { "$szSecondaryStorageDirectory":
-  ensure => directory,
-}
-$szDefaultNfsOptionList =  'rw,async,no_root_squash,no_subtree_check'
-$szDefaultNfsClientList = hiera ( 'DefaultNfsClientList', '*' )
-
-$hNfsExports = {
- "$szPrimaryStorageDirectory" => {
-             'NfsOptionList' => "$szDefaultNfsOptionList",
-             'NfsClientList' => "$szDefaultNfsClientList",
-                               }, 
- "$szSecondaryStorageDirectory" => {
-             'NfsOptionList' => "$szDefaultNfsOptionList",
-             'NfsClientList' => "$szDefaultNfsClientList",
-                             }, 
-}
-class { 'nfsserver':
-   hohNfsExports => $hNfsExports,
-}
-
-$szMysqlRootPassword = 'strongpassword'
-
-# TODO Change the password.
-class { '::mysql::server':
-  root_password    => "$szMysqlRootPassword",
 }
 
 
 # TODO C make this work when running from puppet script.
+# TODO V Somehow make sure the mysql is present, it is a requirement.
 exec { 'install_cloud_db':
   creates => '/var/lib/mysql/cloud',
   path    => [ '/usr/bin', '/bin' ],
   require => [
-                Class [ '::mysql::server' ],
                 Package [ 'cloudstack-management' ],
               ],
   command => "cloudstack-setup-databases cloud:SecretPassword@localhost --deploy-as=root:$szMysqlRootPassword",
 }
+
 
 exec { 'cloudstack-setup-management':
   creates => '/var/log/cloudstack/management/setupManagement.log',
