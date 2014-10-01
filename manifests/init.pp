@@ -91,7 +91,7 @@ exec { 'install_cloud_db':
 exec { 'cloudstack-setup-management':
   creates => '/var/log/cloudstack/management/setupManagement.log',
   command => 'cloudstack-setup-management',
-  path    => '/usr/bin',
+  path    => [ '/usr/bin', '/bin', '/sbin' ],
   require => Exec [ 'install_cloud_db' ],
 }
 

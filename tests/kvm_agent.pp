@@ -7,7 +7,8 @@ package { 'cloudstack-agent':
 file_line { 'vnc_listen':
   require => Package [ 'cloudstack-agent' ],
   path => '/etc/libvirt/qemu.conf',
-  line => 'vnc_listen=0.0.0.0',
+  line => 'vnc_listen="0.0.0.0"',
+  notify  => Service [ 'libvirtd' ],
 }
 
 

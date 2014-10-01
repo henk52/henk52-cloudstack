@@ -7,6 +7,10 @@ Puppet modules for Cloudstack installation.
   clear;puppet apply tests/kvm_agent.pp 
 
 
+Finish the configuration via UI, see p20 and on for cloudstack_installation.pdf
+
+http://CLOUDSTACK_MGMT:8080/client
+
 
 
 
