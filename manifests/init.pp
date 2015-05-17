@@ -36,8 +36,9 @@
 # Copyright 2014 Your name here, unless otherwise noted.
 #
 class cloudstack (
- $szRepoWebHostAddress = hiera( 'RepoWebHostAddress' ),
- $szSecondaryStorageDirectory,
+ $szRepoWebHostAddress        = hiera( 'RepoWebHostAddress' ),
+ $szPrimaryStorageDirectory   = hiera( 'CloudstackPrimaryStorageDirectory', '/primary'),
+ $szSecondaryStorageDirectory = hiera( 'CloudstackSecondaryStorageDirectory', '/secondary'),
 ) {
 
 # TODO N Do I need path, when it is the true file in the title?
@@ -51,9 +52,45 @@ class cloudstack (
 #  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
 #}
 
+
+# === NFS installation and configuration.
+$szDefaultNfsOptionList =  'rw,async,no_root_squash,no_subtree_check'
+$szDefaultNfsClientList = hiera ( 'DefaultNfsClientList', '10.1.2.0/255.255.255.0' )
+$szBaseDirectory = '/var'
+
+$hNfsExports = {
+ "$szPrimaryStorageDirectory" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                               }, 
+ "$szSecondaryStorageDirectory" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                             }, 
+}
+
+# === NTP installation and configuration.
 # TODO Call the NTP class for this.
 package { 'ntp':
   ensure => present,
+}
+
+# === MySQL installation and configuration
+
+$override_options = {
+  'imysqld' => {
+    'innodb_rollback_on_timeout' => '1',
+    'innodb_lock_wait_timeout'   => '600',
+    'max_connections'            => '350',
+    'log-bin'                    => 'mysql-bin',
+    'binlog-format'              => "'ROW'",
+  }
+}
+
+class { '::mysql::server':
+  root_password           => 'strongpassword',
+  remove_default_accounts => true,
+  override_options        => $override_options
 }
 
 
