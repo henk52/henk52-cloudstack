@@ -40,6 +40,8 @@ class cloudstack (
  $szSecondaryStorageDirectory,
 ) {
 
+$szMysqlRootPassword = 'MysqlSecret'
+
 # TODO N Do I need path, when it is the true file in the title?
 #file { '/etc/yum.repos.d/cloudstack.repo':
 #  path    => '/etc/yum.repos.d/cloudstack.repo',
@@ -51,11 +53,56 @@ class cloudstack (
 #  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
 #}
 
+# === Install and configure the NTP.
 # TODO Call the NTP class for this.
 package { 'ntp':
   ensure => present,
 }
 
+# === Install and configure MySQL.
+# From http://cloudstack-installation.readthedocs.org/en/latest/qig.html
+$override_options = {
+  'mysqld' => {
+    'innodb_rollback_on_timeout' => '1',
+    'innodb_lock_wait_timeout'   => '600',
+    'max_connections'            => '350',
+    'log-bin'                    => 'mysql-bin',
+    'binlog-format'              => "'ROW'",
+  }
+}
+
+  
+class { '::mysql::server':
+  root_password           => "$szMysqlRootPassword",
+  override_options        => $override_options
+}
+
+# === Install and configure the KVM.
+class { 'kvm-host': }
+
+
+# === Install and configure NFS
+$szDefaultNfsOptionList =  'ro,no_root_squash'
+$szDefaultNfsClientList = hiera ( 'DefaultNfsClientList', '10.1.233.0/255.255.255.0' )
+$szBaseDirectory = '/'
+
+$hNfsExports = {
+ "$szBaseDirectory/primary" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                               }, 
+ "$szBaseDirectory/secondary" => {
+             'NfsOptionList' => "$szDefaultNfsOptionList",
+             'NfsClientList' => "$szDefaultNfsClientList",
+                             }, 
+}
+
+class { 'nfsserver':
+   hohNfsExports => $hNfsExports,
+}
+
+
+# === Install Cloudstack
 
 # TODO V Make this optional if you are running from a local repo.
 file_line { 'cloudstack.apt-get.eu':
@@ -83,6 +130,7 @@ exec { 'install_cloud_db':
   path    => [ '/usr/bin', '/bin' ],
   require => [
                 Package [ 'cloudstack-management' ],
+                Class [ '::mysql::server' ],
               ],
   command => "cloudstack-setup-databases cloud:SecretPassword@localhost --deploy-as=root:$szMysqlRootPassword",
 }
@@ -92,7 +140,10 @@ exec { 'cloudstack-setup-management':
   creates => '/var/log/cloudstack/management/setupManagement.log',
   command => 'cloudstack-setup-management',
   path    => [ '/usr/bin', '/bin', '/sbin' ],
-  require => Exec [ 'install_cloud_db' ],
+  require => [
+               Exec [ 'install_cloud_db' ],
+               Class [ 'nfsserver', 'kvm-host' ],
+             ],
 }
 
 exec { 'kvm_template_install':
@@ -102,10 +153,16 @@ exec { 'kvm_template_install':
   require => Exec [ 'cloudstack-setup-management' ],
 }
 
+
 # /usr/share/cloudstack-common/scripts/storage/secondary/cloud-install-sys-tmplt \
 #-m /mnt/secondary \
 #-u http://cloudstack.apt-get.eu/systemvm/4.4/systemvm64template-4.4.0-6-kvm.qcow2.bz2 \ -h lxc \
 #-s <optional-management-server-secret-key> \
 #-F
+
+# === Cloudstack Agent
+package { 'cloudstack-agent':
+  ensure => present,
+}
 
 }
