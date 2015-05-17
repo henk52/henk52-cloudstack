@@ -54,9 +54,11 @@ $szMysqlRootPassword = 'MysqlSecret'
 #  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
 #}
 
-<<<<<<< HEAD
-# === Install and configure the NTP.
-=======
+# === NTP installation and configuration.
+# TODO Call the NTP class for this.
+package { 'ntp':
+  ensure => present,
+}
 
 # === NFS installation and configuration.
 $szDefaultNfsOptionList =  'rw,async,no_root_squash,no_subtree_check'
@@ -74,24 +76,14 @@ $hNfsExports = {
                              }, 
 }
 
-# === NTP installation and configuration.
->>>>>>> c8c3cbf998aedb6dcf1a9372255721461c192da2
-# TODO Call the NTP class for this.
-package { 'ntp':
-  ensure => present,
+class { 'nfsserver':
+   hohNfsExports => $hNfsExports,
 }
 
-<<<<<<< HEAD
-# === Install and configure MySQL.
-# From http://cloudstack-installation.readthedocs.org/en/latest/qig.html
-$override_options = {
-  'mysqld' => {
-=======
 # === MySQL installation and configuration
 
 $override_options = {
-  'imysqld' => {
->>>>>>> c8c3cbf998aedb6dcf1a9372255721461c192da2
+  'mysqld' => {
     'innodb_rollback_on_timeout' => '1',
     'innodb_lock_wait_timeout'   => '600',
     'max_connections'            => '350',
@@ -100,7 +92,6 @@ $override_options = {
   }
 }
 
-<<<<<<< HEAD
   
 class { '::mysql::server':
   root_password           => "$szMysqlRootPassword",
@@ -111,36 +102,7 @@ class { '::mysql::server':
 class { 'kvm-host': }
 
 
-# === Install and configure NFS
-$szDefaultNfsOptionList =  'ro,no_root_squash'
-$szDefaultNfsClientList = hiera ( 'DefaultNfsClientList', '10.1.233.0/255.255.255.0' )
-$szBaseDirectory = '/'
-
-$hNfsExports = {
- "$szBaseDirectory/primary" => {
-             'NfsOptionList' => "$szDefaultNfsOptionList",
-             'NfsClientList' => "$szDefaultNfsClientList",
-                               }, 
- "$szBaseDirectory/secondary" => {
-             'NfsOptionList' => "$szDefaultNfsOptionList",
-             'NfsClientList' => "$szDefaultNfsClientList",
-                             }, 
-}
-
-class { 'nfsserver':
-   hohNfsExports => $hNfsExports,
-}
-
-
 # === Install Cloudstack
-=======
-class { '::mysql::server':
-  root_password           => 'strongpassword',
-  remove_default_accounts => true,
-  override_options        => $override_options
-}
-
->>>>>>> c8c3cbf998aedb6dcf1a9372255721461c192da2
 
 # TODO V Make this optional if you are running from a local repo.
 file_line { 'cloudstack.apt-get.eu':
