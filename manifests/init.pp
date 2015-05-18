@@ -76,8 +76,17 @@ $hNfsExports = {
                              }, 
 }
 
+file { "$szPrimaryStorageDirectory":
+  ensure => directory,
+}
+
+file { "$szSecondaryStorageDirectory":
+  ensure => directory,
+}
+
 class { 'nfsserver':
    hohNfsExports => $hNfsExports,
+   require       => File [ "$szPrimaryStorageDirectory", "$szSecondaryStorageDirectory" ],
 }
 
 # === MySQL installation and configuration
