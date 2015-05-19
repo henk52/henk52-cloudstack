@@ -54,11 +54,20 @@ $szMysqlRootPassword = 'MysqlSecret'
 #  subscribe => File['/etc/yum.repos.d/cloudstack.repo'],
 #}
 
+network::if::static { 'eth1':
+  ensure       => 'up',
+  ipaddress    => '192.168.1.100',
+  netmask      => '255.255.255.0',
+  gateway      => '192.168.1.1',
+}
+
 # === NTP installation and configuration.
 # TODO Call the NTP class for this.
 package { 'ntp':
   ensure => present,
 }
+
+
 
 # === NFS installation and configuration.
 $szDefaultNfsOptionList =  'rw,async,no_root_squash,no_subtree_check'
@@ -109,6 +118,13 @@ class { '::mysql::server':
 
 # === Install and configure the KVM.
 class { 'kvm-host': }
+
+file_line { 'vnc_listen':
+  path    => '/etc/libvirt/qemu.conf',
+  line    => 'vnc_listen="0.0.0.0"',
+  require => Class [ 'kvm-host' ],
+}
+
 
 
 # === Install Cloudstack
